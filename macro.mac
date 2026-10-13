@@ -1,0 +1,5 @@
+/run/numberOfThreads 1
+/run/initialize
+/geometry/test/run
+/run/dumpCouples
+/run/beamOn 1000000

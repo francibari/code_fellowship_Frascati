@@ -1,0 +1,566 @@
+//
+// ********************************************************************
+// * License and Disclaimer                                           *
+// *                                                                  *
+// * The  Geant4 software  is  copyright of the Copyright Holders  of *
+// * the Geant4 Collaboration.  It is provided  under  the terms  and *
+// * conditions of the Geant4 Software License,  included in the file *
+// * LICENSE and available at  http://cern.ch/geant4/license .  These *
+// * include a list of copyright holders.                             *
+// *                                                                  *
+// * Neither the authors of this software system, nor their employing *
+// * institutes,nor the agencies providing financial support for this *
+// * work  make  any representation or  warranty, express or implied, *
+// * regarding  this  software system or assume any liability for its *
+// * use.  Please see the license in the file  LICENSE  and URL above *
+// * for the full disclaimer and the limitation of liability.         *
+// *                                                                  *
+// * This  code  implementation is the result of  the  scientific and *
+// * technical work of the GEANT4 collaboration.                      *
+// * By using,  copying,  modifying or  distributing the software (or *
+// * any work based  on the software)  you  agree  to acknowledge its *
+// * use  in  resulting  scientific  publications,  and indicate your *
+// * acceptance of all terms of the Geant4 Software license.          *
+// ********************************************************************
+//
+//
+/// \file B4/B4c/src/DetectorConstruction.cc
+/// \brief Implementation of the B4c::DetectorConstruction class
+
+#include "DetectorConstruction.hh"
+#include "CalorimeterSD.hh"
+#include "G4Material.hh"
+#include "G4NistManager.hh"
+
+#include "G4Box.hh"
+#include "G4LogicalVolume.hh"
+#include "G4PVPlacement.hh"
+#include "G4PVReplica.hh"
+#include "G4GlobalMagFieldMessenger.hh"
+#include "G4AutoDelete.hh"
+
+#include "G4SDManager.hh"
+
+#include "G4VisAttributes.hh"
+#include "G4Colour.hh"
+
+#include "G4PhysicalConstants.hh"
+#include "G4SystemOfUnits.hh"
+
+
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+//                   DETECTOR CONSTRUCTION OF THE MWPC
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+
+
+namespace B4c
+{
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+G4ThreadLocal
+G4GlobalMagFieldMessenger* DetectorConstruction::fMagFieldMessenger = nullptr;
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+G4VPhysicalVolume* DetectorConstruction::Construct()
+{
+  // Define materials
+  DefineMaterials();
+
+  // Define volumes
+  return DefineVolumes();
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::DefineMaterials()
+{
+  // Lead material defined using NIST Manager
+  auto nistManager = G4NistManager::Instance();
+  nistManager->FindOrBuildMaterial("G4_Pb");
+  
+  G4double a;  // mass of a mole;
+  G4double z;  // z=mean number of protons;
+  G4double density;
+  G4double numel;
+  G4double fractionMass;
+  G4int natoms;
+
+  // definisco gli elementi
+  G4Element* elF = new G4Element("Fluorine", "F", z=9., a = 18.998*g/mole);
+  G4Element* elC = new G4Element("Carbon", "C", z=6., a = 12.0*g/mole);
+  G4Element* elH = new G4Element("Hydrogen", "H", z=1., a = 1.01*g/mole);
+  G4Element* elO = new G4Element("Oxygen", "O", z=8., a = 16.0*g/mole);
+  G4Element* elSi = new G4Element("Silicon", "Si", z=14., a = 28.085*g/mole);
+  
+
+  // prendo i materiali che mi servono dal nist
+  G4Material* matH = nistManager->FindOrBuildMaterial("G4_H");
+  G4Material* matC = nistManager->FindOrBuildMaterial("G4_C");
+  G4Material* matN = nistManager->FindOrBuildMaterial("G4_N");
+  G4Material* matO = nistManager->FindOrBuildMaterial("G4_O");
+  G4Material* matNa = nistManager->FindOrBuildMaterial("G4_Na");
+  G4Material* matAl = nistManager->FindOrBuildMaterial("G4_Al");
+  G4Material* matSi = nistManager->FindOrBuildMaterial("G4_Si");
+  G4Material* matAr = nistManager->FindOrBuildMaterial("G4_Ar");
+  G4Material* matCa = nistManager->FindOrBuildMaterial("G4_Ca");
+  G4Material* matFe = nistManager->FindOrBuildMaterial("G4_Fe");
+  G4Material* matMg = nistManager->FindOrBuildMaterial("G4_Mg");
+  G4Material* matB = nistManager->FindOrBuildMaterial("G4_B");
+  G4Material* matK = nistManager->FindOrBuildMaterial("G4_K");
+  G4Material* matTi = nistManager->FindOrBuildMaterial("G4_Ti");
+  G4Material* matF = nistManager->FindOrBuildMaterial("G4_F");
+  G4Material* CO2 = nistManager->FindOrBuildMaterial("G4_CARBON_DIOXIDE");
+
+
+
+  // PER IL GAS GAP
+  // Miscela Ar:CO2:CF4=38:57:5 in volume
+  // definisco i materiali
+  G4Material* CF4 = new G4Material("CF4" , density = 0.00372*g/cm3, numel=2);
+  CF4->AddElement(elC, natoms=1);
+  CF4->AddElement(elF, natoms=4);
+  // definisco la miscela
+  G4Material* gasMaterial = new G4Material("GasMaterial", density=0.001764*g/cm3, numel=3);
+  gasMaterial->AddMaterial(matAr, fractionMass=0.34);
+  gasMaterial->AddMaterial(CO2, fractionMass=0.56);
+  gasMaterial->AddMaterial(CF4, fractionMass=0.1);
+
+
+  // PER IL MATERIALE PASSIVO (PANNELLO)
+  // Pannello (vetronite + panFoam + Cu)
+  G4Material* Vetronite =  new G4Material("Vetronite", 1.86*g/cm3, 14);
+  Vetronite->AddMaterial(matH,  0.0343);
+  Vetronite->AddMaterial(matC,  0.2753);
+  Vetronite->AddMaterial(matO,  0.3606);
+  Vetronite->AddMaterial(matSi, 0.1514);
+  Vetronite->AddMaterial(matB,  0.0140);
+  Vetronite->AddMaterial(matAl, 0.0413);
+  Vetronite->AddMaterial(matCa, 0.0815);
+  Vetronite->AddMaterial(matMg, 0.0090);
+  Vetronite->AddMaterial(matTi, 0.0029);
+  Vetronite->AddMaterial(matNa, 0.0050);
+  Vetronite->AddMaterial(matK, 0.0050);
+  Vetronite->AddMaterial(matFe, 0.0021);
+  Vetronite->AddMaterial(matF, 0.0042);
+  Vetronite->AddMaterial(matN, 0.0142);
+  
+  // schiuma di poliuretano (PanFoam)
+  density = 0.5*g/cm3;
+  //density = 0.03*g/cm3;
+  //density = 1.0*g/cm3;
+  G4Material* panFoam = new G4Material("PanFoam" , density, numel=4);
+  panFoam->AddMaterial(matH, fractionMass=0.0264);
+  panFoam->AddMaterial(matC, fractionMass=0.6911);
+  panFoam->AddMaterial(matN, fractionMass=0.0733);
+  panFoam->AddMaterial(matO, fractionMass=0.2092);
+
+  // Cu layer
+  nistManager->FindOrBuildMaterial("G4_Cu");
+
+  
+  // Vacuum
+  new G4Material("Galactic", z=1., a=1.01*g/mole,density= universe_mean_density,
+                  kStateGas, 2.73*kelvin, 3.e-18*pascal);
+
+  // Print materials
+  G4cout << *(G4Material::GetMaterialTable()) << G4endl;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
+{
+  // Geometry parameters
+  fNofLayers = 4; // rimetti 5, voglio provare con 2 (numero pari) per capire meglio come si posizionano gli step
+  // Comment now these parameters, they are from Emanuele geometry
+  //G4double culayThickness = 0.03*mm;
+  //G4double vetronThickness = 0.8*mm;
+  //G4double schiumaThickness = 7.4*mm;
+  //G4double gasgapThickness = 5.0*mm;
+  //G4double chaSizeX = 100.*cm;
+  //G4double chaSizeY = 40.*cm;
+  //auto panelThickness = schiumaThickness+2*(vetronThickness+culayThickness);
+  //auto chaThickness = 5.*panelThickness + 4.*gasgapThickness;
+  //auto worldSizeX = 2 * chaSizeX;
+  //auto worldSizeY = 2 * chaSizeY;
+  //auto worldSizeZ  = 2 * chaThickness;
+  
+  
+  // my geometry
+  G4double culayThickness = 0.03*mm;
+  G4double vetronThickness = 0.8*mm;
+  G4double schiumaThickness = 7.4*mm;
+  G4double gasgapThickness = 2.5*mm;
+  G4double chaSizeX = 300.*cm;
+  G4double chaSizeY = 250.*cm;
+  G4double ironchaDist = 5.*cm;
+
+  // external shell of the gas layer
+  G4double fieldThickness = 2.*cm;
+
+
+  auto panelThickness = schiumaThickness+2*(vetronThickness+culayThickness);
+  // auto chaThickness = 5.*panelThickness + 4.*gasgapThickness;
+  auto chaThickness = 100*mm;
+  auto layerThickness = panelThickness + gasgapThickness;
+  //auto chaThickness = fNofLayers*layerThickness;
+  auto ironSizeX  = chaSizeX+10.*cm;
+  auto ironSizeY  = chaSizeY+10.*cm;
+  auto ironThickness = 15.*cm;
+  auto ironZpos = -0.5*(chaThickness+ironThickness)-ironchaDist;
+  
+  G4double concreteSizeX = 100.*cm;
+  G4double concreteSizeY = 20.*cm;
+  G4double concreteSizeZ = 70.*cm;
+  G4double concreteYpos = 0.5*(ironSizeY+concreteSizeY)+5.*cm;
+  
+  auto worldSizeX = 2 * chaSizeX;
+  auto worldSizeY = 2 * chaSizeY;
+  auto worldSizeZ = 2* chaThickness;
+  // auto worldSizeX = 1.2 * ironSizeX;
+  // auto worldSizeY = 1.2 * (ironSizeY+concreteSizeY);
+  // auto worldSizeZ  = 1.2 * (abs(ironZpos)+0.5*ironThickness); 
+
+  G4double zpos;
+
+  // Get materials
+  auto defaultMaterial = G4Material::GetMaterial("Galactic");
+  auto culayMaterial = G4Material::GetMaterial("G4_Cu");
+  auto vetronMaterial = G4Material::GetMaterial("Vetronite");
+  auto schiumaMaterial = G4Material::GetMaterial("PanFoam");
+  auto gasMaterial = G4Material::GetMaterial("GasMaterial");
+  auto pbMaterial = G4Material::GetMaterial("G4_Pb");
+
+  printf("panel thickness: %f\n",layerThickness);
+  printf("chamber thickness: %f\n",chaThickness);
+  
+  //if ( ! defaultMaterial || ! culayMaterial || ! vetronMaterial || ! schiumaMaterial ) {
+  //  G4ExceptionDescription msg;
+  //  msg << "Cannot retrieve materials already defined."; 
+  //  G4Exception("B4DetectorConstruction::DefineVolumes()",
+  //    "MyCode0001", FatalException, msg);
+  //}  
+ 
+
+
+  //
+  // Volume hierarchy: world (galactic) -> chamber (galactic) -> layer (galactic)
+  // 1 -> passiveLyer (galactic) -> vetronite (vetronMaterial) + rame (culayMaterial) + schiuma (schiumaMaterial)
+  // 2 -> activeLayer (galactic) -> gasgap (gasMaterial)
+  // Replico poi i layer n volte quanto ne voglio
+  // Da decidere se fare un solo volume logico per cu e vetron layer o farne due
+  //
+
+
+  //
+  // World -> volume nonno -----------------------------------------------------------------------
+  //
+  auto worldS
+    = new G4Box("World",           // its name
+                 worldSizeX, worldSizeY, worldSizeZ); // its size
+
+  auto worldLV
+    = new G4LogicalVolume(
+                 worldS,           // its solid
+                 defaultMaterial,  // its material
+                 "World");         // its name
+
+  auto worldPV = new G4PVPlacement(nullptr,  // no rotation
+    G4ThreeVector(),                         // at (0,0,0)
+    worldLV,                                 // its logical volume
+    "World",                                 // its name
+    nullptr,                                 // its mother  volume
+    false,                                   // no boolean operation
+    0,                                       // copy number
+    fCheckOverlaps);                         // checking overlaps
+
+
+
+ 
+  //
+  // Passive layer -> volume madre -------------------------------------------------------------
+  //
+  auto passiveS
+    = new G4Box("PassiveLayer",            // its name
+                 chaSizeX/2, chaSizeY/2, panelThickness/2); // its size
+
+  auto passiveLV
+    = new G4LogicalVolume(
+                 passiveS,        // its solid
+                 defaultMaterial, // its material
+                 "PassiveLV");    // its name
+
+
+
+  //
+  // Active Layer -> volume madre 
+  //
+  auto activeS
+    = new G4Box("ActiveLayer",             // its name
+                 fieldThickness + chaSizeX/2, fieldThickness + chaSizeY/2, gasgapThickness/2); // its size
+
+  auto activeLV
+    = new G4LogicalVolume(
+                 activeS,             // its solid
+                 defaultMaterial,     // its material
+                 "ActiveLV");         // its name
+
+  
+
+  //
+  // Gas Gap (gasgapMaterial) -> volume figlio (corrente) --------------------------------------------------------------
+  //
+  auto gasgapS
+    = new G4Box("GasLayer",             // its name
+                 chaSizeX/2, chaSizeY/2, gasgapThickness/2); // its size
+
+  auto gasgapLV
+    = new G4LogicalVolume(
+                 gasgapS,             // its solid
+                 gasMaterial,     // its material
+                 "GasGapLV");         // its name
+
+  new G4PVPlacement(nullptr,                   // no rotation
+    G4ThreeVector(),                           // its position
+    gasgapLV,                                  // its logical volume
+    "GasGapLayer",                             // its name
+    activeLV,                                  // its mother  volume
+    false,                                     // no boolean operation
+    0,                                         // copy number
+    fCheckOverlaps);                           // checking overlaps
+
+
+// Shell che avvolge le gas gap
+  auto fieldUpDownS = new G4Box("FieldUpDown", chaSizeX/2, fieldThickness/2, gasgapThickness/2);
+  auto fieldUpDownLV = new G4LogicalVolume(fieldUpDownS, vetronMaterial, "FieldUpDownLV");
+  
+  new G4PVPlacement(0,
+        G4ThreeVector(0, (chaSizeY+fieldThickness)/2, 0),
+        fieldUpDownLV,
+        "FieldUp",
+        activeLV, 
+        false,
+        0,
+        fCheckOverlaps);
+
+  new G4PVPlacement(0,
+        G4ThreeVector(0, -(chaSizeY+fieldThickness)/2, 0),
+        fieldUpDownLV,
+        "FieldDown",
+        activeLV, 
+        false,
+        0,
+        fCheckOverlaps);
+
+
+
+
+  auto fieldRightLeftS = new G4Box("FieldRightLeft", fieldThickness/2, fieldThickness + chaSizeY/2, gasgapThickness/2);
+  auto fieldRightLeftLV = new G4LogicalVolume(fieldRightLeftS, vetronMaterial, "FieldRightLeftLV");
+
+  new G4PVPlacement(0,
+        G4ThreeVector((chaSizeX+fieldThickness)/2, 0, 0),
+        fieldRightLeftLV,
+        "FieldRight",
+        activeLV, 
+        false,
+        0,
+        fCheckOverlaps);
+
+  new G4PVPlacement(0,
+        G4ThreeVector(-(chaSizeX+fieldThickness)/2, 0, 0),
+        fieldRightLeftLV,
+        "FieldLeft",
+        activeLV, 
+        false,
+        0,
+        fCheckOverlaps);
+
+
+
+
+
+
+  //                                 
+  // Schiuma -> volume figlio 
+  //
+  auto schiumaS  = new G4Box("Schiuma",chaSizeX/2, chaSizeY/2, schiumaThickness/2); //its size
+  
+  auto schiumaLV = new G4LogicalVolume(schiumaS,           // its solid
+				       schiumaMaterial,                            // its material
+				       "SchiumaLV");                               // its name
+  
+  new G4PVPlacement(0,    // no rotation
+		    G4ThreeVector(),  // at (0,0,0)
+		    schiumaLV,        // its logical volume                         
+		    "Schiuma",        // its name
+		    passiveLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps 
+
+  //                                 
+  // Vetronite -> volmue figlio
+  //
+  // Sx panel
+  auto vetronSxS  = new G4Box("VetronSx",chaSizeX/2, chaSizeY/2, vetronThickness/2); //its size
+  
+  auto vetronSxLV = new G4LogicalVolume(vetronSxS,           // its solid
+				       vetronMaterial,                            // its material
+				       "VetronSxLV");                               // its name
+  
+  new G4PVPlacement(0,                                                 // no rotation
+		    G4ThreeVector(0., 0., -(schiumaThickness+vetronThickness)/2),  // its position
+		    vetronSxLV,                                                    // its logical volume                         
+		    "VetronSx",                                                    // its name
+		    passiveLV,                                                     // its mother  volume
+		    false,                                                         // no boolean operation
+		    0,                                                             // copy number
+		    fCheckOverlaps);                                               // checking overlaps 
+
+  // Dx panel
+  auto vetronDxS  = new G4Box("VetronDx",chaSizeX/2, chaSizeY/2, vetronThickness/2); //its size
+  
+  auto vetronDxLV = new G4LogicalVolume(vetronDxS,           // its solid
+				       vetronMaterial,                            // its material
+				       "VetronDxLV");                               // its name
+  
+  new G4PVPlacement(0,                                                 // no rotation
+		    G4ThreeVector(0., 0., (schiumaThickness+vetronThickness)/2),   // its position
+		    vetronDxLV,                                                    // its logical volume                         
+		    "VetronDx",                                                    // its name
+		    passiveLV,                                                     // its mother  volume
+		    false,                                                         // no boolean operation
+		    0,                                                             // copy number
+		    fCheckOverlaps);
+
+
+  //                                 
+  // Rame -> volmue figlio
+  //
+  // Sx panel
+  auto culaySxS  = new G4Box("CulaySx",chaSizeX/2, chaSizeY/2, culayThickness/2); //its size
+  
+  auto culaySxLV = new G4LogicalVolume(culaySxS,         // its solid
+				       culayMaterial,                            // its material
+				       "CulaySxLV");                             // its name
+  
+  new G4PVPlacement(0,                   // no rotation
+		    G4ThreeVector(0., 0., -(vetronThickness + (schiumaThickness+culayThickness)/2)),  // its position
+		    culaySxLV,                       // its logical volume                         
+		    "CulaySx",                       // its name
+		    passiveLV,                       // its mother  volume
+		    false,                           // no boolean operation
+		    0,                               // copy number
+		    fCheckOverlaps);                 // checking overlaps 
+
+  // Dx panel
+  auto culayDxS  = new G4Box("CulayDx",chaSizeX/2, chaSizeY/2, culayThickness/2); //its size
+  
+  auto culayDxLV = new G4LogicalVolume(culayDxS,         // its solid
+				       culayMaterial,                            // its material
+				       "CulayDxLV");                             // its name
+  
+  new G4PVPlacement(0,                      // no rotation
+		    G4ThreeVector(0., 0., (vetronThickness + (schiumaThickness+culayThickness)/2)),   // its position
+		    culayDxLV,                          // its logical volume                         
+		    "VetronDx",                         // its name
+		    passiveLV,                          // its mother  volume
+		    false,                              // no boolean operation
+		    0,                                  // copy number
+		    fCheckOverlaps);                    // checking the overlaps
+
+
+
+  // posiziona tutti i vari strati
+    // posizioniamo i pannelli nella camera (5)
+  zpos = -2*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), passiveLV, "Panel", worldLV, false, 0, fCheckOverlaps);
+  zpos = -1*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), passiveLV, "Panel", worldLV, false, 1, fCheckOverlaps);
+  zpos = 0;
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), passiveLV, "Panel", worldLV, false, 2, fCheckOverlaps);
+  zpos = 1*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), passiveLV, "Panel", worldLV, false, 3, fCheckOverlaps);
+  zpos = 2*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), passiveLV, "Panel", worldLV, false, 4, fCheckOverlaps);
+
+
+  // posizioniamo la gap di gas (4)
+  zpos = -1.5*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), activeLV, "Gasgap", worldLV, false, 0, fCheckOverlaps);
+  zpos = -0.5*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), activeLV, "Gasgap", worldLV, false, 1, fCheckOverlaps);
+  zpos = 0.5*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), activeLV, "Gasgap", worldLV, false, 2, fCheckOverlaps);
+  zpos = 1.5*(panelThickness+gasgapThickness);
+  new G4PVPlacement(0, G4ThreeVector(0., 0., zpos), activeLV, "Gasgap", worldLV, false, 3, fCheckOverlaps);
+
+  
+  //
+  // print parameters
+  //
+  G4cout
+    << G4endl
+    << "------------------------------------------------------------" << G4endl
+    << "---> The calorimeter is " << fNofLayers << " layers of: [ "
+    << panelThickness/mm << "mm of passive material  +  "
+    << gasgapThickness/mm << "mm of " << gasMaterial->GetName() << " ] " << G4endl
+    << "------------------------------------------------------------" << G4endl;
+
+  //
+  // Visualization attributes
+  //
+  worldLV->SetVisAttributes(G4VisAttributes::GetInvisible());
+  fieldUpDownLV->SetVisAttributes(G4VisAttributes(G4Colour::Blue()));
+  fieldRightLeftLV->SetVisAttributes(G4VisAttributes(G4Colour::Red()));
+  //chamberLV->SetVisAttributes(G4VisAttributes(G4Colour::White()));
+  gasgapLV->SetVisAttributes(G4VisAttributes(G4Colour::Green()));
+  //passiveLV->SetVisAttributes(G4VisAttributes(G4Colour::Blue()));
+
+  //
+  // Always return the physical World
+  //
+  return worldPV;
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+void DetectorConstruction::ConstructSDandField()
+{
+  // G4SDManager::GetSDMpointer()->SetVerboseLevel(1);
+
+  //
+  // Sensitive detectors
+  //
+  auto absoSD
+    = new CalorimeterSD("AbsorberSD", "AbsorberHitsCollection", fNofLayers);
+  G4SDManager::GetSDMpointer()->AddNewDetector(absoSD);
+  SetSensitiveDetector("PassiveLV",absoSD);
+
+  auto gapSD
+    = new CalorimeterSD("GapSD", "GapHitsCollection", fNofLayers);
+  G4SDManager::GetSDMpointer()->AddNewDetector(gapSD);
+  SetSensitiveDetector("ActiveLV",gapSD);
+
+  //
+  // Magnetic field
+  //
+  // Create global magnetic field messenger.
+  // Uniform magnetic field is then created automatically if
+  // the field value is not zero.
+  G4ThreeVector fieldValue;
+  fMagFieldMessenger = new G4GlobalMagFieldMessenger(fieldValue);
+  fMagFieldMessenger->SetVerboseLevel(1);
+
+  // Register the field messenger for deleting
+  G4AutoDelete::Register(fMagFieldMessenger);
+}
+
+//....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
+
+}
