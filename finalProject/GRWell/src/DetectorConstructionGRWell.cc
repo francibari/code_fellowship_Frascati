@@ -203,11 +203,11 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   G4double gasgapDownThickness = 1.0*mm;
   G4double KaptonThickness = 0.05*mm;
  
-  G4double chaSizeX = 300.*cm;
-  G4double chaSizeY = 250.*cm;
-  G4double chaThickness = 30.*mm;
+  G4double chaSizeX = 300.*mm;
+  G4double chaSizeY = 250.*mm;
+  //G4double chaThickness = 30.*mm;
 
-  G4double fieldThickness = 2.*cm;
+  G4double fieldThickness = 20.*mm;
  
   
   auto worldSizeX = 2 * chaSizeX;
@@ -250,6 +250,22 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 				   false,            // no boolean operation
 				   0,                // copy number
 				   fCheckOverlaps);  // checking overlaps 
+
+
+  G4double TotTh = 4.*culayThickness2+3.*culayThickness1+
+    FR4UpThickness+FR4PrepregThickness+FR4DownThickness+
+    gasgapUpThickness+gasgapDownThickness+
+    2.*KaptonThickness;
+  
+  //                               
+  // Chamber
+  //  
+  //  auto chamberS = new G4Box("Chamber", chaSizeX/2, chaSizeY/2, chaThickness/2);
+  auto chamberS = new G4Box("Chamber", chaSizeX/2, chaSizeY/2, TotTh/2);
+  
+  auto chamberLV = new G4LogicalVolume(chamberS,     // its solid
+				       defaultMaterial,  // its material
+				       "Chamber");   // its name
 
 
 
@@ -330,31 +346,7 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 				      "KaptonLV");         // its name
 
 
-  
-  
-  G4double TotTh = 4.*culayThickness2+3.*culayThickness1+
-    FR4UpThickness+FR4PrepregThickness+FR4DownThickness+
-    gasgapUpThickness+gasgapDownThickness+
-    2.*KaptonThickness;
-  
-  //                               
-  // Chamber
-  //  
-  //  auto chamberS = new G4Box("Chamber", chaSizeX/2, chaSizeY/2, chaThickness/2);
-  auto chamberS = new G4Box("Chamber", chaSizeX/2, chaSizeY/2, TotTh/2);
-  
-  auto chamberLV = new G4LogicalVolume(chamberS,     // its solid
-				       defaultMaterial,  // its material
-				       "Chamber");   // its name
-  
-  new G4PVPlacement(0,                // no rotation
-		    G4ThreeVector(),  // at (0,0,0)
-		    chamberLV,        // its logical volume                         
-		    "Chamber",        // its name
-		    worldLV,          // its mother  volume
-		    false,            // no boolean operation
-		    0,                // copy number
-		    fCheckOverlaps);  // checking overlaps 
+
 
 
 
@@ -571,14 +563,54 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 		    3,                // copy number
 		    fCheckOverlaps);  // checking overlaps 
 
-  
+  // posiziono la chamber
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0, 0, -1.5*TotTh),  // at (0,0,0)
+		    chamberLV,        // its logical volume                         
+		    "Chamber",        // its name
+		    worldLV,          // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps 
+      
+    new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0, 0, -0.5*TotTh),  // at (0,0,0)
+		    chamberLV,        // its logical volume                         
+		    "Chamber",        // its name
+		    worldLV,          // its mother  volume
+		    false,            // no boolean operation
+		    1,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+
+    new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0, 0, 0.5*TotTh),  // at (0,0,0)
+		    chamberLV,        // its logical volume                         
+		    "Chamber",        // its name
+		    worldLV,          // its mother  volume
+		    false,            // no boolean operation
+		    2,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+
+    new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0, 0, 1.5*TotTh),  // at (0,0,0)
+		    chamberLV,        // its logical volume                         
+		    "Chamber",        // its name
+		    worldLV,          // its mother  volume
+		    false,            // no boolean operation
+		    3,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+
+
 
 
   // Field che racchiude il gas
   auto fieldUpDownS = new G4Box("fieldUpDown" ,chaSizeX/2, fieldThickness/2, (gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2);
   auto fieldUpDownLV = new G4LogicalVolume(fieldUpDownS, vetronMaterial, "FieldUpDownLV");
+  auto fieldRightLeftS = new G4Box("fieldRightLeft" ,fieldThickness/2, fieldThickness+chaSizeY/2, (gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2);
+  auto fieldRightLeftLV = new G4LogicalVolume(fieldRightLeftS, vetronMaterial, "FieldRightLeftLV");
 
-  zpos = -1*TotTh/2+culayThickness2+FR4UpThickness+culayThickness2
+  //    chamber 0
+  zpos = -2*TotTh+culayThickness2+FR4UpThickness+culayThickness2
     +(gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2;
   new G4PVPlacement(0,                // no rotation
 		    G4ThreeVector(0., (chaSizeY+fieldThickness)/2, zpos), // its position
@@ -596,12 +628,6 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 		    false,            // no boolean operation
 		    0,                // copy number
 		    fCheckOverlaps);  // checking overlaps
-
-
-
-  auto fieldRightLeftS = new G4Box("fieldRightLeft" ,fieldThickness/2, fieldThickness+chaSizeY/2, (gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2);
-  auto fieldRightLeftLV = new G4LogicalVolume(fieldRightLeftS, vetronMaterial, "FieldRightLeftLV");
-
   new G4PVPlacement(0,                // no rotation
 		    G4ThreeVector((chaSizeX+fieldThickness)/2, 0., zpos), // its position
 		    fieldRightLeftLV,         // its logical volume                         
@@ -619,7 +645,113 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
 		    0,                // copy number
 		    fCheckOverlaps);  // checking overlaps
 
+  //    chamber 1
+  zpos = -1*TotTh+culayThickness2+FR4UpThickness+culayThickness2
+    +(gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2;
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., (chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldUp",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., -(chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldDown",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector((chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldRight",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(-(chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldLeft",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
 
+  //    chamber 2
+  zpos = culayThickness2+FR4UpThickness+culayThickness2
+    +(gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2;
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., (chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldUp",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., -(chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldDown",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector((chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldRight",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(-(chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldLeft",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+
+  //    chamber 3
+  zpos = TotTh+culayThickness2+FR4UpThickness+culayThickness2
+    +(gasgapUpThickness+gasgapDownThickness+2*culayThickness1+KaptonThickness)/2;
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., (chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldUp",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(0., -(chaSizeY+fieldThickness)/2, zpos), // its position
+		    fieldUpDownLV,         // its logical volume                         
+		    "FieldDown",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector((chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldRight",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps
+  new G4PVPlacement(0,                // no rotation
+		    G4ThreeVector(-(chaSizeX+fieldThickness)/2, 0., zpos), // its position
+		    fieldRightLeftLV,         // its logical volume                         
+		    "FieldLeft",         // its name
+		    worldLV,        // its mother  volume
+		    false,            // no boolean operation
+		    0,                // copy number
+		    fCheckOverlaps);  // checking overlaps        
 
 
   //                                        

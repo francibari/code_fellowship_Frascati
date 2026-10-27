@@ -117,8 +117,8 @@ void PrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent)
   // Set gun position
   //fParticleGun->SetParticlePosition(G4ThreeVector(0., 0., -worldZHalfLength));
   // particles with flat distribution in x and y
-  G4double envSizeX = 3040.*mm;
-  G4double envSizeY = 2540.*mm;
+  G4double envSizeX = 340.*mm;
+  G4double envSizeY = 290.*mm;
   G4double z0 = 100.*mm;
   G4double x0 = envSizeX * (G4UniformRand()-0.5);
   G4double y0 = envSizeY * (G4UniformRand()-0.5);

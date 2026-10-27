@@ -165,7 +165,6 @@ void plotEnergy(const char* fileName) {
 
   // Create a canvas and divide it into 2x2 pads
   TCanvas* c1 = new TCanvas("c1", "", 20, 20, 1000, 1000);
-  TCanvas* c2 = new TCanvas("c2", "", 20, 20, 1000, 1000);
   //c1->Divide(2,2);
 
   // Get ntuple
@@ -175,62 +174,49 @@ void plotEnergy(const char* fileName) {
   Double_t de = 0.;
 
   Double_t edep = 0.;
-  Double_t beam = 0.;
   Int_t evID = 0;
-  Int_t layer = 0;
   char logical[256];
 
   Int_t prevID = 0;
-  Double_t prevBeam = 0.;
 
   ntuple->SetBranchAddress("Edep", &edep);
   ntuple->SetBranchAddress("EventID", &evID);
   ntuple->SetBranchAddress("LVName", &logical);
-  ntuple->SetBranchAddress("BeamEnergy", &beam);
 
-  std::vector<double> ybins = {1e-4, 1e-3, 1e-2, 1e-1, 1, 1e+1, 1e+2, 1e+3, 1e+4, 1e+5, 1e+6, 1e+7, 1e+8, 1e+9, 1e+10, 1e+11, 1e+12, 1e+13};
-  int nbinsY = ybins.size() - 1;
-
-  TH1D* h = new TH1D("h", "Energy deposited in totale; Edep (MeV); Conteggi", 200, 0, 0.2);
-  TH2D* h2d = new TH2D("h2d", "Energy deposited in the gas; Edep (MeV); BeamEnergy(eV)", 50, 0.0, 0.05, nbinsY, ybins.data());
+  TH1D* h = new TH1D("h", "Energy deposited per event; Edep (MeV); Conteggi", 100, 0, 0.5);
 
 
   for (int i = 0; i<ntuple->GetEntries(); ++i) {
     ntuple->GetEntry(i);
-    if (i == 0) {
-        prevBeam = beam;
-    }
-    if (prevID == evID){
-      if (strcmp(logical, "gasgapUp") == 0) {
+    
+    if (evID == prevID) {
+      if (strcmp(logical, "GasGapLV") == 0) {
         de += edep;
       }
     } else {
-        if (de != 0.) {
-          h->Fill(de);
-          h2d->Fill(de, prevBeam);
-        }       
-	de = 0.;
-	if (strcmp(logical, "gasgapUp") == 0) {
+      if (de > 0.) {h->Fill(de);}
+      de = 0.;
+      if (strcmp(logical, "GasGapLV") == 0) {
         de += edep;
-	}
       }
-    if (i == ntuple->GetEntries() -1) {
-        h->Fill(de);
-        h2d->Fill(de, beam);
     }
+
+    if (i == ntuple->GetEntries()-1) {
+      if (de > 0.) {h->Fill(de);}
+    }
+
     prevID = evID;
-    prevBeam = beam;
   }
 
   c1->cd();
   h->DrawCopy();
-  c2->cd();
-  h2d->DrawClone();
 
-  //TFile* outFile = TFile::Open("energy_result.root", "UPDATE");
-  //outFile->cd();
-  //outFile->Close();
-  //delete outFile;
+
+  TFile* outFile = TFile::Open("event_result.root", "UPDATE");
+  outFile->cd();
+  h->Write();
+  outFile->Close();
+  delete outFile;
   f->cd();
   delete f;
 }

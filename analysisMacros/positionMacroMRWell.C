@@ -195,21 +195,21 @@ void plotVertexPosition(const char* fileName) {
   TH1D* h = new TH1D("edep", "Energy deposited per track;Edep(MeV);Counts", 500, 0, 0.05);
   //TH1D* h2 = new TH1D ("zpos", "Z coordinated of vertices that release energy in the gap [mm]", 200, -10, 10 );
   THStack* hs = new THStack("hs", "Vertices of tracks that deposit energy in the gas;z(mm);Counts");
-  TH1D* pos_ep = new TH1D ("zpos_ep", "", 200, -10, 10 );
-  TH1D* pos_heavy = new TH1D ("zpos_heavy", "", 200, -10, 10 );
-  TH1D* pos_proton = new TH1D ("zpos_proton", "", 200, -10, 10 );
-  TH1D* pos_gamma = new TH1D ("zpos_gamma", "", 200, -10, 10 );
+  TH1D* pos_ep = new TH1D ("zpos_ep", "", 1000, -30, 30 );
+  TH1D* pos_heavy = new TH1D ("zpos_heavy", "", 1000, -30, 30 );
+  TH1D* pos_proton = new TH1D ("zpos_proton", "", 1000, -30, 30 );
+  TH1D* pos_gamma = new TH1D ("zpos_gamma", "", 1000, -30, 30 );
 
   THStack* es = new THStack("es", "Vertices of electron that release energy in the gas;z(mm);Counts");
-  TH1D* e_ion = new TH1D ("e_ion", "", 200, -10, 10 );
-  TH1D* e_compt = new TH1D ("e_compt", "", 200, -10, 10 );
-  TH1D* e_phot = new TH1D ("e_phot", "", 200, -10, 10 );
-  TH1D* e_rad = new TH1D ("e_rad", "", 200, -10, 10 );
+  TH1D* e_ion = new TH1D ("e_ion", "", 1000, -30, 30 );
+  TH1D* e_compt = new TH1D ("e_compt", "", 1000, -30, 30 );
+  TH1D* e_phot = new TH1D ("e_phot", "", 1000, -30, 30 );
+  TH1D* e_rad = new TH1D ("e_rad", "", 1000, -30, 30 );
 
 
-  TH1D* pos_primary = new TH1D ("zpos_primary", "Position of primary interaction vertices;z(mm);Counts", 200, -10, 10 );
+  TH1D* pos_primary = new TH1D ("zpos_primary", "Position of primary interaction vertices;z(mm);Counts", 1000, -30, 30 );
 
-  TH2D* h2 = new TH2D("h2", "Position ionization electron;X [mm];Y [mm]", 4000, -2000.0, 2000.0, 3000, -1500.0, 1500.0);
+  TH2D* h2 = new TH2D("h2", "Position ionization electron;X [mm];Y [mm]", 4000, -200.0, 200.0, 3000, -150.0, 150.0);
 
   
 

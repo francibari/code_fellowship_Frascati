@@ -195,12 +195,12 @@ G4VPhysicalVolume* DetectorConstruction::DefineVolumes()
   G4double vetronThickness = 0.8*mm;
   G4double schiumaThickness = 7.4*mm;
   G4double gasgapThickness = 2.5*mm;
-  G4double chaSizeX = 300.*cm;
-  G4double chaSizeY = 250.*cm;
+  G4double chaSizeX = 300.*mm;
+  G4double chaSizeY = 250.*mm;
   G4double ironchaDist = 5.*cm;
 
   // external shell of the gas layer
-  G4double fieldThickness = 2.*cm;
+  G4double fieldThickness = 20.*mm;
 
 
   auto panelThickness = schiumaThickness+2*(vetronThickness+culayThickness);
